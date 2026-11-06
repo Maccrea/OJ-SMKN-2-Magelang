@@ -1,25 +1,29 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { User } from 'lucide-react';
 
 export default function Navbar() {
+  const location = useLocation();
+
   return (
-    <nav className="bg-slate-900 border-b border-slate-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-white font-bold tracking-wide text-lg">
-              SMK<span className="text-blue-400">OJ</span>
-            </Link>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link to="/" className="bg-slate-800 text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</Link>
-                <Link to="#" className="text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Leaderboard</Link>
-              </div>
-            </div>
+    <nav className="border-b border-zinc-800 bg-[#09090b] sticky top-0 z-50">
+      <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between text-sm">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="font-bold text-zinc-100 text-base tracking-wide">
+            B.O.S <span className="text-zinc-500 text-xs font-normal ml-1">✦</span>
+          </Link>
+          <div className="hidden md:flex items-center gap-6">
+            <Link to="/" className={`${location.pathname === '/' ? 'text-zinc-100 font-medium' : 'text-zinc-400 hover:text-zinc-200'}`}>Beranda / Dashboard</Link>
+            <Link to="/task/1" className={`${location.pathname.includes('/task') ? 'text-zinc-100 font-medium' : 'text-zinc-400 hover:text-zinc-200'}`}>Tugas Praktikum</Link>
+            <Link to="#" className="text-zinc-400 hover:text-zinc-200">Bimbingan Mentor</Link>
           </div>
-          <div>
-            <div className="text-sm font-medium text-slate-300 border border-slate-600 px-3 py-1.5 rounded bg-slate-800">
-              Student ID: DEV-01
-            </div>
+        </div>
+        <div className="flex items-center gap-3 text-right">
+          <div className="hidden sm:block">
+            <div className="text-zinc-100 font-medium text-xs">Ahmad Pratama</div>
+            <div className="text-[10px] text-zinc-500">XII RPL 2 • NISN 00641829</div>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300">
+            <User size={16} />
           </div>
         </div>
       </div>
