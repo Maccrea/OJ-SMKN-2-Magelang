@@ -11,4 +11,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     Route::get('/admin/users', [AdminController::class, 'getUsers']);
+    Route::get('/admin/modules', [AdminController::class, 'getModules']);
+    Route::post('/admin/modules', [AdminController::class, 'storeModule']);
 });

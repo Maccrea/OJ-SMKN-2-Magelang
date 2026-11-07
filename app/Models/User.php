@@ -10,7 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Track;
 
-#[Fillable(['name', 'email', 'password', 'nisn', 'role'])]
+#[Fillable(['name', 'email', 'password', 'nisn', 'role', 'track_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
