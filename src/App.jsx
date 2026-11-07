@@ -7,6 +7,7 @@ import NavbarAdmin from './components/NavbarAdmin';
 import Bimbingan from './pages/murid/Bimbingan';
 import AdminDashboard from './pages/admin/Dashboard';
 import ManageUsers from './pages/admin/ManageUsers';
+import Review from './pages/admin/Review';
 
 function Layout({ children }) {
   const location = useLocation();
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/bimbingan" element={<Bimbingan />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<ManageUsers />} />
+        <Route path="/admin/review" element={<Review />} />
       </Routes>
     </Layout>
   );
