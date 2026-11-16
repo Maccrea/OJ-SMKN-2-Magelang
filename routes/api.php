@@ -29,10 +29,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/submissions', [AdminController::class, 'getSubmissions']);
     Route::get('/student/mentorship', [AdminController::class, 'getMentorshipData']);
     Route::post('/student/mentorship', [AdminController::class, 'storeMentorshipSession']);
-    Route::get('/gas-import', function () {
+    
+});
+Route::get('/gas-import', function () {
     $sql = file_get_contents(database_path('lab_bos.sql'));
     $sql = preg_replace('/\/\*!.*?\*\/;|START TRANSACTION;|COMMIT;|SET .*?;/s', '', $sql);
     \Illuminate\Support\Facades\DB::unprepared($sql);
     return response()->json(['status' => 'MANTAP, DATABASE MASUK SEMUA!']);
-});
 });
