@@ -14,7 +14,7 @@ export default function Review() {
   const fetchSubmissions = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await axios.get('http://localhost:8000/api/admin/submissions', {
+      const response = await axios.get('https://oj-smkn-2-magelang-production.up.railway.app/api/admin/submissions', {
   headers: { Authorization: `Bearer ${token}` }
 });
       if (response.data.success) {
@@ -45,7 +45,7 @@ export default function Review() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('auth_token');
-      await axios.put(`http://localhost:8000/api/admin/submissions/${selectedSub.id}/evaluate`, {
+      await axios.put(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/submissions/${selectedSub.id}/evaluate`, {
         final_score: score,
         mentor_feedback: feedback
       }, {

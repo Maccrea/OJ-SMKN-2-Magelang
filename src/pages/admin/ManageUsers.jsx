@@ -24,7 +24,7 @@ export default function ManageUsers() {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await axios.get(
-        "http://localhost:8000/api/admin/users",
+        "https://oj-smkn-2-magelang-production.up.railway.app/api/admin/users",
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -65,7 +65,7 @@ export default function ManageUsers() {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await axios.put(
-        `http://localhost:8000/api/admin/users/${selectedUser.id}/role`,
+        `https://oj-smkn-2-magelang-production.up.railway.app/api/admin/users/${selectedUser.id}/role`,
         roleData,
         {
           headers: { Authorization: `Bearer ${token}` },

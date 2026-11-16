@@ -15,7 +15,7 @@ export default function Navbar() {
         const token = localStorage.getItem("auth_token");
         if (!token) return;
 
-        const response = await axios.get("http://localhost:8000/api/me", {
+        const response = await axios.get("https://oj-smkn-2-magelang-production.up.railway.app/api/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

@@ -25,7 +25,7 @@ export default function ModulTracks() {
       try {
         const token = localStorage.getItem("auth_token");
         const response = await axios.get(
-          "http://localhost:8000/api/student/dashboard",
+          "https://oj-smkn-2-magelang-production.up.railway.app/api/student/dashboard",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

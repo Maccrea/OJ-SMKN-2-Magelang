@@ -26,7 +26,7 @@ export default function AdminDashboard() {
   const fetchModules = async (forceUpdateActiveModule = false) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await axios.get('http://localhost:8000/api/admin/modules', {
+      const response = await axios.get('https://oj-smkn-2-magelang-production.up.railway.app//api/admin/modules', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -73,12 +73,12 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('auth_token');
       if (editingModuleId) {
         // UPDATE
-        await axios.put(`http://localhost:8000/api/admin/modules/${editingModuleId}`, formData, {
+        await axios.put(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules/${editingModuleId}`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // CREATE
-        await axios.post('http://localhost:8000/api/admin/modules', formData, {
+        await axios.post('https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules', formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
     if(!window.confirm('Yakin ingin menghapus modul ini beserta semua tugas di dalamnya?')) return;
     try {
       const token = localStorage.getItem('auth_token');
-      await axios.delete(`http://localhost:8000/api/admin/modules/${id}`, {
+      await axios.delete(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchModules();
@@ -132,12 +132,12 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('auth_token');
       if (editingTaskId) {
         // UPDATE TUGAS
-        await axios.put(`http://localhost:8000/api/admin/tasks/${editingTaskId}`, taskData, {
+        await axios.put(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/tasks/${editingTaskId}`, taskData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // CREATE TUGAS
-        await axios.post(`http://localhost:8000/api/admin/modules/${activeModule.id}/tasks`, taskData, {
+        await axios.post(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules/${activeModule.id}/tasks`, taskData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
     if(!window.confirm('Yakin ingin menghapus tugas/analisis ini?')) return;
     try {
       const token = localStorage.getItem('auth_token');
-      await axios.delete(`http://localhost:8000/api/admin/tasks/${taskId}`, {
+      await axios.delete(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchModules(true);

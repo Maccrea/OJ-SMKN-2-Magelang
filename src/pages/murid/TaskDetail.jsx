@@ -19,7 +19,7 @@ export default function TaskWorkspace() {
     const fetchTask = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await axios.get(`http://localhost:8000/api/student/tasks/${id}`, {
+        const response = await axios.get(`https://oj-smkn-2-magelang-production.up.railway.app/api/student/tasks/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.success) {
@@ -70,7 +70,7 @@ export default function TaskWorkspace() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await axios.post(`http://localhost:8000/api/student/tasks/${id}/submit`, {
+      const response = await axios.post(`https://oj-smkn-2-magelang-production.up.railway.app/api/student/tasks/${id}/submit`, {
         code_snapshot: code
       }, {
         headers: { Authorization: `Bearer ${token}` }

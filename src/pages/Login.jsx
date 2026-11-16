@@ -20,7 +20,7 @@ export default function Login() {
 
     try {
       // Tembak API Laravel
-      const response = await axios.post('http://localhost:8000/api/login', {
+      const response = await axios.post('https://oj-smkn-2-magelang-production.up.railway.app/api/login', {
         nisn: nisn,
         password: password
       });

@@ -52,7 +52,7 @@ export default function Bimbingan() {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await axios.get(
-        "http://localhost:8000/api/student/mentorship",
+        "https://oj-smkn-2-magelang-production.up.railway.app/api/student/mentorship",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -87,7 +87,7 @@ export default function Bimbingan() {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await axios.post(
-        "http://localhost:8000/api/student/mentorship",
+        "https://oj-smkn-2-magelang-production.up.railway.app/api/student/mentorship",
         {
           mentor_id: selectedMentor,
           session_date: selectedDate,
