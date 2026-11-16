@@ -7,8 +7,11 @@ use App\Http\Controllers\Api\AdminController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user-profile', function (Request $request) {
-        return $request->user();
+    Route::get('/me', function (\Illuminate\Http\Request $request) {
+        return response()->json([
+            'success' => true,
+            'data' => $request->user()
+        ]);
     });
     Route::get('/admin/users', [AdminController::class, 'getUsers']);
     Route::get('/admin/modules', [AdminController::class, 'getModules']);
@@ -20,4 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/tasks/{id}', [AdminController::class, 'destroyTask']);
     Route::put('/admin/users/{id}/role', [AdminController::class, 'updateUserRole']);
     Route::put('/admin/submissions/{id}/evaluate', [AdminController::class, 'submitReview']);
+    Route::get('/student/dashboard', [AdminController::class, 'getStudentDashboard']);
+    Route::get('/student/tasks/{id}', [AdminController::class, 'getTaskDetail']);
+    Route::post('/student/tasks/{id}/submit', [AdminController::class, 'submitTask']);
+    Route::get('/admin/submissions', [AdminController::class, 'getSubmissions']);
+    Route::get('/student/mentorship', [AdminController::class, 'getMentorshipData']);
+    Route::post('/student/mentorship', [AdminController::class, 'storeMentorshipSession']);
 });

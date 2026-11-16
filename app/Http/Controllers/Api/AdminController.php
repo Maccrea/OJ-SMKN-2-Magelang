@@ -120,17 +120,23 @@ class AdminController extends Controller
     // --- FITUR UPDATE USER ROLE ---
     public function updateUserRole(Request $request, $id)
     {
-        $user = \App\Models\User::findOrFail($id);
-        $validated = $request->validate([
-            'role' => 'required|in:siswa,guru,admin',
-            'track_id' => 'nullable|integer|exists:tracks,id'
-        ]);
+        // Tangkap data, kalau kosong PAKSA jadi angka 1 (Frontend UI)
+        $role = $request->input('role', 'siswa');
+        $trackId = $request->input('track_id');
+        $finalTrackId = empty($trackId) ? 1 : (int) $trackId; 
         
-        $user->update($validated);
+        // Tembak langsung ke MySQL tanpa ampun
+        \Illuminate\Support\Facades\DB::table('users')
+            ->where('id', $id)
+            ->update([
+                'role' => $role,
+                'track_id' => $finalTrackId
+            ]);
         
+        // Kirim balik laporan persis apa yang disimpan
         return response()->json([
             'success' => true, 
-            'message' => 'Hak akses dan spesialisasi berhasil diperbarui!'
+            'message' => "SUKSES! Data ditembak: Role = $role, Track ID = $finalTrackId"
         ]);
     }
 
@@ -151,6 +157,118 @@ class AdminController extends Controller
         return response()->json([
             'success' => true, 
             'message' => 'Evaluasi berhasil disimpan dan disahkan!'
+        ]);
+    }
+
+    // --- API UNTUK DASHBOARD SISWA ---
+    public function getStudentDashboard(Request $request)
+    {
+        $user = $request->user();
+
+        $modules = \App\Models\Module::with('tasks')
+            ->where('track_id', $user->track_id)
+            ->orderBy('week_number', 'asc')
+            ->get();
+
+        $submissions = \App\Models\Submission::with('task.module')
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $mentor = \App\Models\User::whereIn('role', ['guru', 'admin'])
+            ->where('track_id', $user->track_id)
+            ->first();
+
+        if (!$mentor) {
+            $mentor = \App\Models\User::whereIn('role', ['guru', 'admin'])->first();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'modules' => $modules,
+                'submissions' => $submissions,
+                'mentor' => $mentor // <-- Mengirim data mentor ke React
+            ]
+        ]);
+    }
+
+    public function getTaskDetail($id)
+    {
+        $task = \App\Models\Task::with('module')->findOrFail($id);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $task
+        ]);
+    }
+
+    // --- API UNTUK SISWA MENGIRIM JAWABAN TUGAS ---
+    public function submitTask(Request $request, $id)
+    {
+        $request->validate([
+            'code_snapshot' => 'required|string'
+        ]);
+
+        // Simpan jawaban, kalau sudah pernah ngerjain sebelumnya bakal di-update
+        $submission = \App\Models\Submission::updateOrCreate(
+            ['user_id' => $request->user()->id, 'task_id' => $id],
+            [
+                'code_snapshot' => $request->code_snapshot,
+                'status' => 'submitted'
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Jawaban berhasil dikirim! Silakan tunggu review mentor.'
+        ]);
+    }
+
+    // --- API BIMBINGAN MENTOR (SISWA) ---
+    public function getMentorshipData(Request $request)
+    {
+        $user = $request->user();
+
+        // Ambil daftar mentor (admin / guru) dari database
+        $mentors = \App\Models\User::whereIn('role', ['admin', 'guru'])->get();
+
+        // Ambil riwayat & jadwal bimbingan siswa ini
+        $sessions = \App\Models\MentorshipSession::with('mentor')
+            ->where('student_id', $user->id)
+            ->orderBy('session_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'mentors' => $mentors,
+                'sessions' => $sessions
+            ]
+        ]);
+    }
+
+    public function storeMentorshipSession(Request $request)
+    {
+        $validated = $request->validate([
+            'mentor_id' => 'required|exists:users,id',
+            'session_date' => 'required|date',
+            'time_slot' => 'required|string',
+            'location_type' => 'required|string',
+            'topic' => 'required|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['student_id'] = $request->user()->id;
+        $validated['status'] = 'scheduled';
+
+        $session = \App\Models\MentorshipSession::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Jadwal bimbingan berhasil dikonfirmasi!',
+            'data' => $session
         ]);
     }
 }
