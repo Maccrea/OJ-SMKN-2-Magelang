@@ -1,236 +1,451 @@
-import { Link } from 'react-router-dom';
-import { CheckCircle2, MessageSquare, Star, Clock, Laptop, PlayCircle, BookOpen, Terminal } from 'lucide-react';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Clock,
+  CheckCircle2,
+  ChevronRight,
+  MessageSquare,
+  Terminal,
+  BookOpen,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function Dashboard() {
-  return (
-    <div className="max-w-[1400px] mx-auto px-6 py-8">
-      
-      {/* Hero Section */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-2xl p-6 mb-6 flex justify-between items-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-        <div>
-          <div className="flex items-center gap-2 text-[10px] text-zinc-400 mb-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Lab RPL 2 • Online • Sesi Siang
-          </div>
-          <h1 className="text-3xl font-bold text-zinc-100 mb-1 flex items-center gap-2">Halo, Ahmad! ✨</h1>
-          <p className="text-sm text-zinc-400">Siap ngoding santai hari ini? 1 tugas aktif menunggu sentuhan logikamu.</p>
-        </div>
-        <div className="hidden md:flex gap-4">
-          <div className="bg-[#09090b] border border-zinc-800 rounded-xl p-4 flex items-center gap-3">
-            <div className="p-2 bg-zinc-800 rounded-lg text-zinc-400"><BookOpen size={20} /></div>
-            <div>
-              <div className="text-[10px] text-zinc-500">TARGET MODUL</div>
-              <div className="text-sm font-bold text-zinc-200">Modul 04 <span className="text-zinc-500 font-normal">/ 04</span></div>
-            </div>
-          </div>
-          <div className="bg-[#09090b] border border-zinc-800 rounded-xl p-4 flex items-center gap-3">
-            <div className="p-2 bg-zinc-800 rounded-lg text-zinc-400"><CheckCircle2 size={20} /></div>
-            <div>
-              <div className="text-[10px] text-zinc-500">RATA-RATA NILAI</div>
-              <div className="text-sm font-bold text-zinc-200">91.6 <span className="text-zinc-500 font-normal">/ 100</span></div>
-            </div>
-          </div>
-        </div>
+export default function StudentDashboard() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // LOGIKA STATUS MENTOR (Berdasarkan Waktu Nyata)
+  const [isMentorAvailable, setIsMentorAvailable] = useState(false);
+
+  useEffect(() => {
+    // Cek jam kerja: Senin(1) - Jumat(5), Jam 08.00 - 16.00
+    const checkAvailability = () => {
+      const now = new Date();
+      const day = now.getDay();
+      const hour = now.getHours();
+      setIsMentorAvailable(day >= 1 && day <= 5 && hour >= 8 && hour < 16);
+    };
+
+    checkAvailability();
+    // Update status setiap menit
+    const timer = setInterval(checkAvailability, 60000);
+
+    const fetchDashboard = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await axios.get(
+          "http://localhost:8000/api/student/dashboard",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (response.data.success) {
+          setDashboardData(response.data.data);
+        }
+      } catch (err) {
+        console.error("Gagal memuat dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // FUNGSI HITUNG SISA WAKTU DINAMIS
+  const getRemainingTimeText = (deadline) => {
+    if (!deadline) return "7 Hari Lagi";
+    const diff = new Date(deadline) - new Date();
+    if (diff <= 0) return "Tenggat Habis";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+
+    if (days > 0) return `${days} Hari Lagi`;
+    return `${hours} Jam Lagi`;
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-[#09090b] text-zinc-400 p-8 flex justify-center items-center">
+        Menyiapkan ruang kerja...
       </div>
+    );
+  if (!dashboardData)
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-[#09090b] text-zinc-400 p-8 flex justify-center items-center">
+        Gagal memuat data.
+      </div>
+    );
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (Task Active & History) */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* 3 Status Cards */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-4">
-              <div className="text-[10px] text-emerald-400 mb-1 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> MODUL AKTIF</div>
-              <div className="font-bold text-zinc-200 text-sm truncate">Filter Data Kantin</div>
-              <div className="text-xs text-zinc-500 mt-1 flex justify-between items-center">
-                <span>PHP 8.2 CLI Array</span>
-                <span className="p-1 bg-zinc-800 rounded text-zinc-400"><Terminal size={14}/></span>
-              </div>
-            </div>
-            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-4">
-              <div className="text-[10px] text-amber-400 mb-1 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> STATUS REVIEW</div>
-              <div className="font-bold text-zinc-200 text-sm">Tahap 3 <span className="text-zinc-500 font-normal text-xs">/ 4</span></div>
-              <div className="text-xs text-zinc-500 mt-1 flex justify-between items-center">
-                <span>Tanya Jawab Guru</span>
-                <span className="p-1 bg-zinc-800 rounded text-zinc-400"><MessageSquare size={14}/></span>
-              </div>
-            </div>
-            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-4">
-              <div className="text-[10px] text-rose-400 mb-1 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> WAKTU TERSISA</div>
-              <div className="font-bold text-zinc-200 text-sm">6 Hari 23 Jam</div>
-              <div className="text-xs text-zinc-500 mt-1 flex justify-between items-center">
-                <span>Tenggat: Senin 23:59</span>
-                <span className="p-1 bg-zinc-800 rounded text-zinc-400"><Clock size={14}/></span>
-              </div>
-            </div>
-          </div>
+  const { user, modules, submissions, mentor } = dashboardData;
 
-          {/* Active Task Detail Card */}
-          <div className="bg-[#121214] border border-zinc-800 rounded-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full"></div>
-            <div className="flex justify-between items-start mb-6 relative z-10">
-              <div>
-                <div className="flex items-center gap-2 text-[10px] text-zinc-400 mb-2">
-                  <span className="bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">TUGAS MINGGU INI</span>
-                  Algoritma & Pemrograman
-                </div>
-                <h2 className="text-xl font-bold text-zinc-100">Filter Data Kantin SMK</h2>
-              </div>
-              <div className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-mono">
-                PHP 8.2 CLI
-              </div>
-            </div>
+  let activeModule = null;
+  let activeTask = null;
 
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-medium text-zinc-400">PROGRES EVALUASI</span>
-                <span className="text-[10px] text-zinc-500">75% Menuju Selesai</span>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1 bg-[#09090b] border border-emerald-900/50 rounded-lg p-2.5 flex items-center gap-2 opacity-60">
-                  <CheckCircle2 size={16} className="text-emerald-500" />
-                  <div className="text-[10px] text-emerald-400">1. Git Push<br/><span className="text-zinc-500">Terkirim</span></div>
-                </div>
-                <div className="flex-1 bg-[#09090b] border border-emerald-900/50 rounded-lg p-2.5 flex items-center gap-2 opacity-60">
-                  <PlayCircle size={16} className="text-emerald-500" />
-                  <div className="text-[10px] text-emerald-400">2. Unit Test<br/><span className="text-zinc-500">5/5 Lolos</span></div>
-                </div>
-                <div className="flex-1 bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-2.5 flex items-center gap-2">
-                  <MessageSquare size={16} className="text-indigo-400" />
-                  <div className="text-[10px] text-indigo-300">3. Tanya Jawab<br/><span className="text-indigo-400/60">Tunggu Responmu</span></div>
-                </div>
-                <div className="flex-1 bg-[#09090b] border border-zinc-800 rounded-lg p-2.5 flex items-center gap-2 opacity-40">
-                  <Star size={16} className="text-zinc-500" />
-                  <div className="text-[10px] text-zinc-400">4. Nilai Akhir<br/><span className="text-zinc-600">Pending</span></div>
-                </div>
-              </div>
-            </div>
+  for (const mod of modules) {
+    if (mod.tasks && mod.tasks.length > 0) {
+      for (const task of mod.tasks) {
+        const isSubmitted = submissions.find((s) => s.task_id === task.id);
+        if (!isSubmitted) {
+          activeModule = mod;
+          activeTask = task;
+          break;
+        }
+      }
+      if (activeTask) break;
+    }
+  }
 
-            <div className="bg-[#09090b] border border-zinc-800 rounded-lg p-4 mb-4">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <MessageSquare size={14} className="text-zinc-500" />
-                  <span className="text-xs font-bold text-zinc-300">Catatan Guru</span>
-                  <span className="text-[10px] text-zinc-500">• Bpk. Hendra (15 menit lalu)</span>
-                </div>
-                <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">Santai, kamu pasti bisa!</span>
-              </div>
-              <p className="text-sm text-zinc-300 italic">"Mengapa memilih built-in <code className="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded not-italic font-mono text-[10px]">array_filter()</code> dibanding <code className="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded not-italic font-mono text-[10px]">foreach</code>? Bagaimana perkiraan efisiensi memorinya jika dataset makin besar?"</p>
-            </div>
+  const verifiedSubs = submissions.filter((s) => s.status === "verified");
+  const avgScore =
+    verifiedSubs.length > 0
+      ? (
+          verifiedSubs.reduce(
+            (acc, curr) => acc + parseFloat(curr.final_score),
+            0,
+          ) / verifiedSubs.length
+        ).toFixed(1)
+      : 0;
+  const totalTasksInTrack = modules.reduce(
+    (total, mod) => total + (mod.tasks ? mod.tasks.length : 0),
+    0,
+  );
+  const totalCompletedTasks = submissions.length;
+  const progressPercentage =
+    totalTasksInTrack > 0
+      ? Math.round((totalCompletedTasks / totalTasksInTrack) * 100)
+      : 0;
+  const totalUnitTestsOk = submissions.reduce(
+    (acc, curr) => acc + (curr.unit_test_score || 0),
+    0,
+  );
 
-            <div className="flex gap-3">
-              <Link to="/task/1" className="bg-zinc-100 hover:bg-white text-zinc-900 font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors">
-                <MessageSquare size={16} /> Jawab Pertanyaan
-              </Link>
-              <button className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors">
-                <Terminal size={16} /> Lihat Kodemu
-              </button>
-            </div>
-          </div>
+  // DATA MENTOR DINAMIS
+  const mentorName = mentor?.name || "Belum ditugaskan";
+  const mentorInitials = mentor?.name
+    ? mentor.name.substring(0, 2).toUpperCase()
+    : "NA";
 
-          {/* Task History */}
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-[#09090b] text-zinc-300 font-sans pb-20">
+      <div className="max-w-[1200px] mx-auto px-6 pt-8">
+        {/* WELCOME BANNER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2"><CheckCircle2 size={18} className="text-emerald-500"/> Tugas yang Sudah Selesai</h3>
-              <span className="text-xs text-zinc-500">Semester Genap 2024</span>
+            <div className="text-[10px] text-emerald-400 mb-2 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>{" "}
+              Lab RPL 2 • Online • Sesi Siang
             </div>
-            <div className="space-y-3">
-              {[
-                { title: 'Penjadwalan Antrian Servis Mobil', date: '12 Feb', mod: 'Modul 03', note: 'Logika antrian FIFO sudah tepat, struktur kode rapi.', score: 95 },
-                { title: 'Validasi Formulir Pendaftaran Siswa', date: '05 Feb', mod: 'Modul 02', note: 'Regex email bagus, hanya perlu merapikan response error.', score: 88 },
-                { title: 'Perhitungan Kasir Toko Kelontong', date: '28 Jan', mod: 'Modul 01', note: 'Algoritma diskon bekerja optimal sesuai modul.', score: 92 },
-              ].map((task, i) => (
-                <div key={i} className="bg-[#121214] border border-zinc-800 rounded-xl p-4 flex items-center justify-between group hover:border-zinc-700 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#09090b] rounded-lg border border-zinc-800 flex items-center justify-center text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                      {i === 0 ? <Terminal size={18}/> : i === 1 ? <BookOpen size={18}/> : <Laptop size={18}/>}
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-zinc-500 mb-0.5">{task.mod} • {task.date}</div>
-                      <div className="text-sm font-bold text-zinc-200 mb-0.5">{task.title}</div>
-                      <div className="text-xs text-zinc-500 italic truncate max-w-sm">"{task.note}"</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 text-sm font-bold text-zinc-200 bg-zinc-800/50 px-3 py-1.5 rounded-lg border border-zinc-700/50">
-                      <Star size={14} className="text-amber-400" /> {task.score}
-                    </div>
-                    <button className="text-xs text-zinc-400 hover:text-zinc-100 flex items-center gap-1 transition-colors">Review →</button>
-                  </div>
+            <h1 className="text-4xl font-bold text-zinc-100 mb-2">
+              Halo, {user.name.split(" ")[0]}! ✨
+            </h1>
+            <p className="text-sm text-zinc-400">
+              {activeTask
+                ? "Siap ngoding santai hari ini? Ada tugas menunggumu."
+                : "Hebat! Semua tugas yang tersedia sudah kamu selesaikan."}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3 flex items-center gap-3">
+              <div className="p-2 bg-zinc-800/50 rounded-lg text-zinc-400">
+                <BookOpen size={16} />
+              </div>
+              <div>
+                <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
+                  Modul Diselesaikan
                 </div>
-              ))}
+                <div className="text-sm font-bold text-zinc-200">
+                  {
+                    [...new Set(submissions.map((s) => s.task?.module_id))]
+                      .length
+                  }{" "}
+                  / {modules.length}
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3 flex items-center gap-3">
+              <div className="p-2 bg-zinc-800/50 rounded-lg text-zinc-400">
+                <CheckCircle2 size={16} />
+              </div>
+              <div>
+                <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
+                  Rata-Rata Nilai
+                </div>
+                <div className="text-sm font-bold text-zinc-200">
+                  {avgScore}{" "}
+                  <span className="text-[10px] text-zinc-500 font-normal">
+                    / 100
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column (Mentor & Stats) */}
-        <div className="space-y-6">
-          
-          <div className="bg-[#121214] border border-zinc-800 rounded-xl overflow-hidden">
-            <div className="h-32 bg-zinc-800 relative overflow-hidden group cursor-pointer">
-              <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=500&auto=format&fit=crop" alt="Lab" className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121214] to-transparent"></div>
-              <div className="absolute bottom-3 left-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-xs font-bold text-zinc-200 shadow-black drop-shadow-md">Lab 2 Terbuka</span>
-              </div>
-              <div className="absolute bottom-3 right-4 text-[10px] text-zinc-300 bg-black/50 px-2 py-1 rounded backdrop-blur-sm">Kapasitas: 24/32 PC</div>
-            </div>
-            
-            <div className="p-5 border-b border-zinc-800">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-zinc-200 flex items-center gap-2"><MessageSquare size={16}/> Tanya Mentor</h3>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">Tersedia</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/30">HK</div>
-                <div>
-                  <div className="text-sm font-bold text-zinc-200">Bpk. Hendra Kurniawan</div>
-                  <div className="text-[10px] text-zinc-500 flex items-center gap-1"><Clock size={10}/> Selasa & Kamis • 13.00</div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* KIRI: AREA TUGAS UTAMA */}
+          <div className="lg:col-span-8 space-y-6">
+            {activeTask && activeModule && (
+              <div className="grid grid-cols-3 gap-4">
+                {/* KARTU 1: MODUL AKTIF */}
+                <div className="bg-[#121214] border border-zinc-800 rounded-xl p-4 flex flex-col justify-between">
+                  <div className="text-[9px] text-emerald-400 font-bold tracking-wider mb-1 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>{" "}
+                    MODUL AKTIF
+                  </div>
+                  <div className="text-sm font-bold text-zinc-200 truncate">
+                    {activeModule.title}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 flex justify-between items-center mt-3">
+                    Pekan {activeModule.week_number} <ChevronRight size={12} />
+                  </div>
+                </div>
+
+                {/* KARTU 2: STATUS TUGAS (Dinamis & Bisa Diklik) */}
+                <Link
+                  to={`/task/${activeTask.id}`}
+                  className="bg-[#121214] border border-zinc-800 hover:border-amber-500/40 rounded-xl p-4 flex flex-col justify-between transition-colors group"
+                >
+                  <div className="text-[9px] text-amber-400 font-bold tracking-wider mb-1 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>{" "}
+                    STATUS TUGAS
+                  </div>
+                  <div className="text-sm font-bold text-zinc-200">
+                    {totalTasksInTrack - totalCompletedTasks} Tugas Tersisa
+                  </div>
+                  <div className="text-[10px] text-zinc-500 group-hover:text-amber-400 flex justify-between items-center mt-3 transition-colors">
+                    Buka Editor <MessageSquare size={12} />
+                  </div>
+                </Link>
+
+                {/* KARTU 3: WAKTU TERSISA (Dinamis dari Deadline) */}
+                <div className="bg-[#121214] border border-rose-900/30 rounded-xl p-4 flex flex-col justify-between">
+                  <div className="text-[9px] text-rose-400 font-bold tracking-wider mb-1 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>{" "}
+                    WAKTU TERSISA
+                  </div>
+                  <div className="text-lg font-bold text-zinc-100">
+                    {getRemainingTimeText(activeTask.deadline)}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 flex justify-between items-center mt-3">
+                    Tenggat Praktikum <Clock size={12} />
+                  </div>
                 </div>
               </div>
-              <button className="w-full bg-[#09090b] hover:bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium py-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-2">
-                <Laptop size={14}/> Reservasi Meja Praktikum
+            )}
+
+            {/* Panel Tugas Aktif */}
+            <div className="bg-[#121214] border border-indigo-500/20 rounded-xl p-6 relative overflow-hidden shadow-[0_0_30px_rgba(99,102,241,0.03)]">
+              <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+
+              {activeTask ? (
+                <>
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                        Tugas Berikutnya{" "}
+                        <span className="bg-zinc-800 px-2 py-0.5 rounded text-zinc-400 capitalize">
+                          {user.track?.name || "Umum"}
+                        </span>
+                      </div>
+                      <h2 className="text-2xl font-bold text-zinc-100">
+                        {activeTask.title}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#09090b] border border-zinc-800 rounded-lg p-4 mb-6">
+                    <p className="text-xs text-zinc-400 whitespace-pre-wrap leading-relaxed">
+                      {activeTask.study_case_html}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    <Link
+                      to={`/task/${activeTask.id}`}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition-all cursor-pointer shadow-lg hover:shadow-indigo-500/20"
+                    >
+                      Mulai Kerjakan <ChevronRight size={14} />
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <div className="w-16 h-16 bg-zinc-800/50 rounded-full flex items-center justify-center text-zinc-600 mx-auto mb-4">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-zinc-200 mb-2">
+                    Hore! Kamu sudah bebas tugas.
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Tunggu gurumu menerbitkan modul dan tugas baru ya.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Riwayat Selesai */}
+            <div>
+              <h3 className="text-sm font-bold text-zinc-200 mb-4 flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-400" /> Riwayat
+                Tugas Selesai
+              </h3>
+              {submissions.length === 0 ? (
+                <div className="bg-[#121214] border border-zinc-800 border-dashed rounded-xl p-8 text-center text-xs text-zinc-500">
+                  Kamu belum mengirimkan tugas apa pun.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {submissions.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className="bg-[#121214] border border-zinc-800 rounded-xl p-4 flex justify-between items-center group hover:border-zinc-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
+                          <Terminal size={16} />
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-zinc-500 mb-0.5">
+                            {sub.task?.module?.title || "Modul Praktikum"}
+                          </div>
+                          <div className="text-sm font-bold text-zinc-200">
+                            {sub.task?.title || "Tugas"}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div
+                            className={`text-sm font-bold ${sub.status === "verified" ? "text-emerald-400" : "text-amber-400"}`}
+                          >
+                            {sub.status === "verified"
+                              ? `⭐ ${sub.final_score}`
+                              : "Menunggu Nilai"}
+                          </div>
+                        </div>
+                        <button className="text-[10px] font-bold text-zinc-400 bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded transition-colors cursor-pointer">
+                          Lihat Detail ➔
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* KANAN: SIDEBAR */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Mentor Info */}
+            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-5">
+              <h3 className="text-xs font-bold text-zinc-300 mb-4 flex justify-between items-center">
+                Tanya Mentor
+                {isMentorAvailable ? (
+                  <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[9px] border border-emerald-500/20">
+                    Tersedia
+                  </span>
+                ) : (
+                  <span className="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[9px] border border-rose-500/20">
+                    Offline
+                  </span>
+                )}
+              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${mentor ? "bg-indigo-900 text-indigo-300" : "bg-zinc-800 text-zinc-500"}`}
+                >
+                  {mentorInitials}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-zinc-200">
+                    {mentorName}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 flex items-center gap-1">
+                    <Clock size={10} /> Senin - Jumat • 08.00 - 16.00
+                  </div>
+                </div>
+              </div>
+              <button
+                disabled={!isMentorAvailable}
+                className={`w-full text-xs font-bold py-2.5 rounded-lg transition-colors ${isMentorAvailable ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 cursor-pointer" : "bg-zinc-900 text-zinc-600 cursor-not-allowed border border-zinc-800"}`}
+              >
+                📅 Reservasi Meja Praktikum
               </button>
             </div>
 
-            <div className="p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-zinc-200 text-xs flex items-center gap-2"><Star size={14}/> PENCAPAIAN PEKAN INI</h3>
-                <span className="text-[10px] text-zinc-500">Level 4 Coder</span>
-              </div>
-              
+            {/* Statistik */}
+            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-5">
+              <h3 className="text-xs font-bold text-zinc-300 mb-4 flex justify-between items-center">
+                Pencapaian Belajarmu{" "}
+                <span className="text-[9px] text-zinc-500">Semester Ini</span>
+              </h3>
               <div className="flex items-center gap-4 mb-6">
                 <div className="relative w-12 h-12 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path className="text-zinc-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
-                    <path className="text-zinc-200" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
+                  <svg
+                    className="w-full h-full transform -rotate-90"
+                    viewBox="0 0 36 36"
+                  >
+                    <path
+                      className="text-zinc-800"
+                      strokeWidth="3"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-indigo-500"
+                      strokeWidth="3"
+                      strokeDasharray={`${progressPercentage}, 100`}
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-zinc-200">3 dari 4 Tugas Tuntas!</div>
-                  <div className="text-[10px] text-zinc-500">Konsistensi kode rapi, pertahankan ritme belajarmu.</div>
+                  <div className="text-sm font-bold text-zinc-200">
+                    {totalCompletedTasks} dari {totalTasksInTrack} Tugas Tuntas!
+                  </div>
+                  <div className="text-[9px] text-zinc-500 mt-0.5">
+                    {progressPercentage === 100
+                      ? "Luar biasa, semuanya selesai!"
+                      : "Ayo selesaikan sisa tugasmu."}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-between text-center border-t border-zinc-800 pt-4">
+              <div className="grid grid-cols-3 gap-2 text-center border-t border-zinc-800 pt-4">
                 <div>
-                  <div className="text-lg font-bold text-zinc-200">5</div>
-                  <div className="text-[9px] text-zinc-500 uppercase tracking-wider">Unit Test OK</div>
+                  <div className="text-lg font-bold text-zinc-200">
+                    {totalUnitTestsOk}
+                  </div>
+                  <div className="text-[8px] font-bold text-zinc-500 uppercase">
+                    Unit Test OK
+                  </div>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-zinc-200">91.6</div>
-                  <div className="text-[9px] text-zinc-500 uppercase tracking-wider">Rerata Skor</div>
+                  <div className="text-lg font-bold text-indigo-400">
+                    {avgScore}
+                  </div>
+                  <div className="text-[8px] font-bold text-zinc-500 uppercase">
+                    Rerata Skor
+                  </div>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-zinc-200">100%</div>
-                  <div className="text-[9px] text-zinc-500 uppercase tracking-wider">Kehadiran</div>
+                  <div className="text-lg font-bold text-emerald-400">
+                    {progressPercentage}%
+                  </div>
+                  <div className="text-[8px] font-bold text-emerald-500 uppercase">
+                    Progress
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          
         </div>
       </div>
     </div>

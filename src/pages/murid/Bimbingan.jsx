@@ -1,320 +1,547 @@
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Monitor, Zap, MessageSquare, Coffee, Video, CheckCircle2, Clock, Star, Send } from 'lucide-react';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  Video,
+  CheckCircle2,
+  UserCheck,
+  Sparkles,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+} from "lucide-react";
 
 export default function Bimbingan() {
-  return (
-    <div className="max-w-[1400px] mx-auto px-6 py-8 pb-20">
-      
-      {/* Hero Section */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-2xl p-6 mb-6 flex justify-between items-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-bl-full pointer-events-none"></div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-[10px] text-zinc-400 mb-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Lab RPL SMK 2 • Konsultasi Tatap Muka & Online
-          </div>
-          <h1 className="text-3xl font-bold text-zinc-100 mb-2 flex items-center gap-2">Ruang Bimbingan & Meja Konsultasi <Coffee size={24} className="text-amber-500"/></h1>
-          <p className="text-sm text-zinc-400 max-w-2xl">Pilih jadwal diskusi santai di Meja Konsultasi Lab RPL atau online voice untuk bedah kode, tanya jawab logika algoritma, dan curhat seputar industri software.</p>
-        </div>
-        <div className="hidden md:flex items-center gap-4 relative z-10 bg-[#09090b] border border-zinc-800 p-4 rounded-xl">
-          <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20">
-            <div className="w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center">
-              <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Status Bimbingan</div>
-            <div className="text-lg font-bold text-zinc-200">3 Sesi Mandiri</div>
-            <div className="text-[10px] text-zinc-400 flex items-center gap-1 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span> Sisa kuota pekan aktif</div>
-          </div>
-        </div>
+  const [mentors, setMentors] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // State Kalender Dinamis (Bulan Berjalan)
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
+  // State Form Booking Sesi
+  const [selectedMentor, setSelectedMentor] = useState("");
+  const [timeSlot, setTimeSlot] = useState("13:30");
+  const [locationType, setLocationType] = useState("offline");
+  const [topic, setTopic] = useState("Review Logika Modul");
+  const [notes, setNotes] = useState("");
+
+  const timeSlots = [
+    { time: "10:15", label: "Pagi • Sesi 1" },
+    { time: "13:30", label: "Siang • Sesi 2" },
+    { time: "14:15", label: "Siang • Sesi 3" },
+    { time: "15:00", label: "Sore • Sesi 4" },
+  ];
+
+  const topics = [
+    "Review Logika Modul",
+    "Pendalaman Tanya Jawab",
+    "Kendala Bug / Error",
+    "Diskusi PKL & Karier",
+    "Refactoring Clean Code",
+  ];
+
+  const fetchMentorship = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await axios.get(
+        "http://localhost:8000/api/student/mentorship",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.data.success) {
+        const fetchedMentors = response.data.data.mentors || [];
+        setMentors(fetchedMentors);
+        setSessions(response.data.data.sessions || []);
+        if (fetchedMentors.length > 0 && !selectedMentor) {
+          setSelectedMentor(fetchedMentors[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat data bimbingan:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMentorship();
+  }, []);
+
+  const handleBooking = async (e) => {
+    e.preventDefault();
+    if (!selectedMentor) {
+      alert("Pilih mentor terlebih dahulu!");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await axios.post(
+        "http://localhost:8000/api/student/mentorship",
+        {
+          mentor_id: selectedMentor,
+          session_date: selectedDate,
+          time_slot: timeSlot,
+          location_type: locationType,
+          topic: topic,
+          notes: notes,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        alert(response.data.message);
+        setNotes("");
+        fetchMentorship(); // Refresh jadwal dari database
+      }
+    } catch (err) {
+      alert(
+        "Gagal membuat jadwal: " +
+          (err.response?.data?.message || "Periksa koneksi atau tabel database.")
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Helper Generate Hari Kalender
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  ];
+
+  const upcomingSessions = sessions.filter((s) => s.status === "scheduled");
+  const completedSessions = sessions.filter((s) => s.status === "completed");
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-[#09090b] text-zinc-400 p-8 flex justify-center items-center">
+        Menyiapkan ruang bimbingan...
       </div>
+    );
+  }
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column: Calendar & Mentor Status */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          
-          {/* Calendar Widget */}
-          <div className="bg-[#121214] border border-zinc-800 rounded-xl p-5">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-zinc-200 flex items-center gap-2 text-lg"><CalendarIcon size={18}/> Februari 2025</h3>
-              <div className="flex items-center gap-2">
-                <button className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded">Hari Ini</button>
-                <div className="flex gap-1">
-                  <button className="p-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-400"><ChevronLeft size={16}/></button>
-                  <button className="p-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-400"><ChevronRight size={16}/></button>
-                </div>
-              </div>
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-[#09090b] text-zinc-300 font-sans pb-20">
+      <div className="max-w-[1200px] mx-auto px-6 pt-8">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+          <div>
+            <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Lab RPL Unit 2 • Konsultasi Tatap Muka & Online
             </div>
-
-            {/* Days Header */}
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-zinc-500 mb-2 font-medium">
-              <div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div className="text-rose-400/70">Sab</div><div className="text-rose-400/70">Min</div>
-            </div>
-
-            {/* Dates Grid (Dummy Data for Feb 2025 based on image) */}
-            <div className="grid grid-cols-7 gap-y-3 text-center text-xs">
-              <div className="text-zinc-700">27</div><div className="text-zinc-700">28</div><div className="text-zinc-700">29</div><div className="text-zinc-700">30</div><div className="text-zinc-700">31</div><div className="text-zinc-700">1</div><div className="text-zinc-700">2</div>
-              
-              <div className="flex flex-col items-center gap-1 text-zinc-300">3<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">4<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">5<span className="w-1 h-1 rounded-full bg-amber-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">6<span className="w-1 h-1 rounded-full bg-amber-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">7<span className="w-1 h-1 rounded-full bg-amber-500"></span></div>
-              <div className="text-zinc-700">8</div><div className="text-zinc-700">9</div>
-              
-              <div className="flex flex-col items-center gap-1 text-zinc-300">10<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">11<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">12<span className="w-1 h-1 rounded-full bg-amber-500"></span></div>
-              <div className="flex flex-col items-center justify-center w-7 h-7 bg-indigo-100 text-indigo-950 rounded-full font-bold mx-auto">13</div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">14<span className="w-1 h-1 rounded-full bg-rose-500"></span></div>
-              <div className="text-zinc-700">15</div><div className="text-zinc-700">16</div>
-
-              <div className="flex flex-col items-center gap-1 text-zinc-300">17<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">18<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">19<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">20<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">21<span className="w-1 h-1 rounded-full bg-amber-500"></span></div>
-              <div className="text-zinc-700">22</div><div className="text-zinc-700">23</div>
-              
-              <div className="flex flex-col items-center gap-1 text-zinc-300">24<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">25<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">26<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">27<span className="w-1 h-1 rounded-full bg-indigo-500"></span></div>
-              <div className="flex flex-col items-center gap-1 text-zinc-300">28<span className="w-1 h-1 rounded-full bg-rose-500"></span></div>
-              <div className="text-zinc-700">1</div><div className="text-zinc-700">2</div>
-            </div>
-
-            {/* Legend */}
-            <div className="flex justify-between items-center mt-6 pt-4 border-t border-zinc-800 text-[10px] text-zinc-400">
-              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Slot Terbuka</span>
-              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Terbatas</span>
-              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Penuh</span>
-              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span> Libur</span>
-            </div>
+            <h1 className="text-3xl font-bold text-zinc-100 mb-1">
+              Ruang Bimbingan & Meja Konsultasi ✨
+            </h1>
+            <p className="text-xs text-zinc-400">
+              Pilih jadwal diskusi santai di Meja Konsultasi Lab RPL atau online voice untuk bedah kode, tanya jawab logika algoritma, dan curhat seputar industri software.
+            </p>
           </div>
 
-          {/* Mentor Standby Widget */}
-          <div className="bg-[#121214] border border-zinc-800 rounded-xl p-5">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Mentor Standby • 13 Feb 2025</h3>
-              <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">Meja A-1 (Lab Komputer 2)</span>
+          <div className="bg-[#121214] border border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+              <UserCheck size={18} />
             </div>
-            
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-[#09090b] border border-zinc-800 p-3 rounded-lg flex items-center gap-3">
-                <div className="relative">
-                  <img src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=100&h=100&fit=crop" className="w-10 h-10 rounded object-cover" alt="Mentor" />
-                  <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-[#09090b] rounded-full"></span>
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-zinc-200">Bpk. Hendra Kurniawan</div>
-                  <div className="text-[9px] text-zinc-500">S.Kom • Fullstack & Backend</div>
-                </div>
+            <div>
+              <div className="text-[9px] text-zinc-500 font-bold uppercase">
+                Total Sesi Bimbingan
               </div>
-              <div className="bg-[#09090b] border border-zinc-800 p-3 rounded-lg flex items-center gap-3">
-                <div className="relative">
-                  <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop" className="w-10 h-10 rounded object-cover" alt="Mentor" />
-                  <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-[#09090b] rounded-full"></span>
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-zinc-200">Ibu Ratna Kumalasari</div>
-                  <div className="text-[9px] text-zinc-500">S.Pd • Database & OOP Logic</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#09090b] border border-zinc-800 p-3 rounded-lg">
-              <div className="text-[10px] text-zinc-500 mb-2">Fasilitas Standby di Meja A-1:</div>
-              <div className="flex flex-wrap gap-2 text-[10px] text-zinc-400">
-                <span className="flex items-center gap-1 bg-zinc-800/50 px-2 py-1 rounded"><Zap size={12}/> Koneksi Gigabit Lab</span>
-                <span className="flex items-center gap-1 bg-zinc-800/50 px-2 py-1 rounded"><Coffee size={12}/> Colokan Meja Standby</span>
-                <span className="flex items-center gap-1 bg-zinc-800/50 px-2 py-1 rounded w-full"><Monitor size={12}/> Monitor Eksternal Siap Pakai</span>
+              <div className="text-sm font-bold text-zinc-100">
+                {sessions.length} Sesi Terdaftar
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* Right Column: Booking Form */}
-        <div className="lg:col-span-8">
-          <div className="bg-[#121214] border border-zinc-800 rounded-xl p-6 h-full flex flex-col">
-            
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20"><Book size={20} className="lucide lucide-calendar-check" /></div>
-                <div>
-                  <h2 className="text-xl font-bold text-zinc-100">Formulir Booking Sesi</h2>
-                  <p className="text-xs text-zinc-500">Terpilih: Kamis, 13 Februari 2025</p>
+        {/* GRID UTAMA: KALENDER + MENTOR STANDBY (KIRI) & FORM BOOKING (KANAN) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+          {/* KOLOM KIRI (5 KOLOM) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* KALENDER */}
+            <div className="bg-[#121214] border border-zinc-800 rounded-2xl p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                  <CalendarIcon size={15} className="text-indigo-400" />
+                  {monthNames[month]} {year}
+                </h2>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
+                    className="p-1.5 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 cursor-pointer"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
+                    className="p-1.5 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 cursor-pointer"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
                 </div>
               </div>
-              <div className="text-[10px] font-medium bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full">Step 1 s/d 4</div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-zinc-500 mb-2">
+                <div>Min</div>
+                <div>Sen</div>
+                <div>Sel</div>
+                <div>Rab</div>
+                <div>Kam</div>
+                <div>Jum</div>
+                <div>Sab</div>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`empty-${i}`} className="p-2"></div>
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, idx) => {
+                  const dayNum = idx + 1;
+                  const dateStr = `${year}-${String(month + 1).padStart(
+                    2,
+                    "0"
+                  )}-${String(dayNum).padStart(2, "0")}`;
+                  const isSelected = selectedDate === dateStr;
+                  const hasSession = sessions.some(
+                    (s) => s.session_date === dateStr
+                  );
+
+                  return (
+                    <button
+                      key={dayNum}
+                      type="button"
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`p-2 rounded-lg font-bold transition-all relative cursor-pointer ${
+                        isSelected
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                          : "bg-[#09090b] hover:bg-zinc-800 text-zinc-300 border border-zinc-800/60"
+                      }`}
+                    >
+                      {dayNum}
+                      {hasSession && (
+                        <span className="w-1 h-1 rounded-full bg-emerald-400 absolute bottom-1 left-1/2 -translate-x-1/2"></span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="flex-1 space-y-6">
-              {/* Step 1 */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-[10px]">1</span> Pilih Jam Sesi Diskusi</h3>
-                  <span className="text-[10px] text-zinc-500">Sesi reguler: 40 Menit</span>
-                </div>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-[#09090b] border border-zinc-800 hover:border-zinc-600 rounded-xl p-4 text-center cursor-pointer transition-colors">
-                    <div className="text-[10px] text-zinc-500 mb-1">Pagi</div>
-                    <div className="text-xl font-bold text-zinc-300 mb-1">10:15</div>
-                    <div className="text-[10px] text-zinc-500">1 slot</div>
-                  </div>
-                  <div className="bg-indigo-500/10 border-2 border-indigo-500 rounded-xl p-4 text-center cursor-pointer shadow-[0_0_15px_rgba(99,102,241,0.1)]">
-                    <div className="text-[10px] text-indigo-400 mb-1 flex items-center justify-center gap-1">Siang <Star size={10} className="fill-indigo-400"/></div>
-                    <div className="text-xl font-bold text-indigo-100 mb-1">13:30</div>
-                    <div className="text-[10px] bg-indigo-500 text-white rounded px-1.5 py-0.5 inline-block">Terpilih ✓</div>
-                  </div>
-                  <div className="bg-[#09090b] border border-zinc-800 hover:border-zinc-600 rounded-xl p-4 text-center cursor-pointer transition-colors">
-                    <div className="text-[10px] text-zinc-500 mb-1">Siang</div>
-                    <div className="text-xl font-bold text-zinc-300 mb-1">14:15</div>
-                    <div className="text-[10px] text-zinc-500">2 slot</div>
-                  </div>
-                  <div className="bg-[#09090b] border border-zinc-800 hover:border-zinc-600 rounded-xl p-4 text-center cursor-pointer transition-colors">
-                    <div className="text-[10px] text-zinc-500 mb-1">Sore</div>
-                    <div className="text-xl font-bold text-zinc-300 mb-1">15:00</div>
-                    <div className="text-[10px] text-zinc-500">1 slot</div>
-                  </div>
-                </div>
+            {/* MENTOR STANDBY */}
+            <div className="bg-[#121214] border border-zinc-800 rounded-2xl p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                  Mentor Standby Lab RPL
+                </h3>
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">
+                  {mentors.length} Aktif
+                </span>
               </div>
 
-              {/* Step 2 */}
-              <div>
-                <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2 mb-3"><span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-[10px]">2</span> Format Pertemuan</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-indigo-100 border-2 border-indigo-200 rounded-xl p-4 flex items-center justify-between cursor-pointer text-indigo-950">
-                    <div className="flex items-center gap-4">
-                      <MapPin size={24} className="text-indigo-600"/>
+              <div className="space-y-3">
+                {mentors.map((m) => (
+                  <div
+                    key={m.id}
+                    onClick={() => setSelectedMentor(m.id)}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                      Number(selectedMentor) === Number(m.id)
+                        ? "bg-indigo-500/10 border-indigo-500/40"
+                        : "bg-[#09090b] border-zinc-800 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-indigo-900/60 text-indigo-300 flex items-center justify-center font-bold text-xs uppercase">
+                        {m.name.substring(0, 2)}
+                      </div>
                       <div>
-                        <div className="font-bold text-sm">Tatap Muka di Lab RPL 2</div>
-                        <div className="text-[10px] text-indigo-950/70">Meja Konsultasi A-1 • Kopi / Teh lab</div>
+                        <div className="text-xs font-bold text-zinc-100">
+                          {m.name}
+                        </div>
+                        <div className="text-[10px] text-zinc-500 capitalize">
+                          {m.role} • {m.track?.name || "Fullstack & RPL"}
+                        </div>
                       </div>
                     </div>
-                    <CheckCircle2 size={20} className="text-indigo-600 fill-indigo-200"/>
+                    {Number(selectedMentor) === Number(m.id) && (
+                      <CheckCircle2 size={16} className="text-indigo-400" />
+                    )}
                   </div>
-                  <div className="bg-[#09090b] border border-zinc-800 hover:border-zinc-700 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-colors">
-                    <div className="flex items-center gap-4">
-                      <Video size={24} className="text-zinc-500"/>
-                      <div>
-                        <div className="font-bold text-sm text-zinc-300">Online Discord / Voice</div>
-                        <div className="text-[10px] text-zinc-500">Channel #bimbingan-voice-1</div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* KOLOM KANAN: FORMULIR BOOKING SESI (7 KOLOM) */}
+          <form
+            onSubmit={handleBooking}
+            className="lg:col-span-7 bg-[#121214] border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between"
+          >
+            <div className="space-y-6">
+              <div className="border-b border-zinc-800 pb-4 flex justify-between items-center">
+                <div>
+                  <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
+                    <Sparkles size={16} className="text-indigo-400" /> Formulir
+                    Booking Sesi
+                  </h2>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                    Tanggal dipilih:{" "}
+                    <span className="text-zinc-200 font-bold">
+                      {selectedDate}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 1. PILIH JAM SESI DISKUSI */}
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
+                  1. Pilih Jam Sesi Diskusi
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {timeSlots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      onClick={() => setTimeSlot(slot.time)}
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                        timeSlot === slot.time
+                          ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                          : "bg-[#09090b] border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                      }`}
+                    >
+                      <div className="text-sm font-bold font-mono">
+                        {slot.time}
+                      </div>
+                      <div
+                        className={`text-[9px] mt-0.5 ${
+                          timeSlot === slot.time
+                            ? "text-indigo-200"
+                            : "text-zinc-500"
+                        }`}
+                      >
+                        {slot.label}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. METODE PERTEMUAN */}
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
+                  2. Metode Pertemuan
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLocationType("offline")}
+                    className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                      locationType === "offline"
+                        ? "bg-indigo-500/10 border-indigo-500/50 text-zinc-100"
+                        : "bg-[#09090b] border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <MapPin
+                      size={18}
+                      className={
+                        locationType === "offline"
+                          ? "text-indigo-400"
+                          : "text-zinc-500"
+                      }
+                    />
+                    <div>
+                      <div className="text-xs font-bold">
+                        Tatap Muka di Lab RPL 2
+                      </div>
+                      <div className="text-[10px] text-zinc-500">
+                        Meja Konsultasi #1 (Fisik)
                       </div>
                     </div>
-                    <div className="w-5 h-5 rounded-full border-2 border-zinc-700"></div>
-                  </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLocationType("online")}
+                    className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                      locationType === "online"
+                        ? "bg-indigo-500/10 border-indigo-500/50 text-zinc-100"
+                        : "bg-[#09090b] border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <Video
+                      size={18}
+                      className={
+                        locationType === "online"
+                          ? "text-indigo-400"
+                          : "text-zinc-500"
+                      }
+                    />
+                    <div>
+                      <div className="text-xs font-bold">
+                        Online Discord / Meet
+                      </div>
+                      <div className="text-[10px] text-zinc-500">
+                        Channel #bimbingan-voice-1
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
 
-              {/* Step 3 */}
+              {/* 3. FOKUS MATERI & DISKUSI */}
               <div>
-                <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2 mb-3"><span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-[10px]">3</span> Fokus Materi & Diskusi</h3>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <button className="bg-indigo-500 border border-indigo-400 text-white px-4 py-2 rounded-full flex items-center gap-2 font-medium"><CheckCircle2 size={14}/> Review Logika Modul 04</button>
-                  <button className="bg-[#09090b] border border-zinc-700 text-zinc-400 hover:text-zinc-200 px-4 py-2 rounded-full transition-colors">Persiapan Tanya Jawab</button>
-                  <button className="bg-[#09090b] border border-zinc-700 text-zinc-400 hover:text-zinc-200 px-4 py-2 rounded-full transition-colors">Kendala Bug / Error</button>
-                  <button className="bg-[#09090b] border border-zinc-700 text-zinc-400 hover:text-zinc-200 px-4 py-2 rounded-full transition-colors">Diskusi PKL & Karier</button>
-                  <button className="bg-[#09090b] border border-zinc-700 text-zinc-400 hover:text-zinc-200 px-4 py-2 rounded-full transition-colors">Refactoring Clean Code</button>
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
+                  3. Fokus Materi & Diskusi
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {topics.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTopic(t)}
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                        topic === t
+                          ? "bg-indigo-600 border-indigo-500 text-white"
+                          : "bg-[#09090b] border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Step 4 */}
+              {/* 4. CATATAN SINGKAT UNTUK MENTOR */}
               <div>
-                <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2 mb-3"><span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-[10px]">4</span> Catatan Singkat untuk Mentor (Opsional)</h3>
-                <textarea 
-                  className="w-full bg-[#09090b] border border-zinc-800 rounded-xl p-4 text-sm text-zinc-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none placeholder:text-zinc-700"
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                  4. Catatan Singkat untuk Mentor (Opsional)
+                </label>
+                <textarea
                   rows="3"
-                  placeholder="Contoh: Pak Hendra, saya bingung relasi Eloquent Many-to-Many di Laravel saat migrate tabel pivot..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Contoh: Pak/Kak, saya bingung bagian query relasi Eloquent atau error CORS saat fetch API..."
+                  className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-zinc-200 outline-none resize-none"
                 ></textarea>
               </div>
             </div>
 
-            <div className="border-t border-zinc-800 pt-5 mt-6 flex justify-between items-center">
-              <div className="text-[10px] text-zinc-500 flex items-center gap-2">
-                <MessageSquare size={14}/> Notifikasi otomatis dikirim ke WhatsApp siswa
-              </div>
-              <button className="bg-indigo-200 hover:bg-indigo-300 text-indigo-950 font-bold px-6 py-3 rounded-lg text-sm transition-colors flex items-center gap-2">
-                Konfirmasi Jadwal Bimbingan <Send size={16}/>
+            <div className="pt-6 mt-6 border-t border-zinc-800 flex justify-end">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-indigo-500/20"
+              >
+                {submitting
+                  ? "Menyimpan Jadwal..."
+                  : "Konfirmasi Jadwal Bimbingan ➔"}
               </button>
             </div>
-          </div>
+          </form>
         </div>
-      </div>
 
-      {/* Bottom Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Mendatang */}
-        <div className="bg-[#121214] border border-zinc-800 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-bold text-zinc-400 bg-zinc-800/50 px-2 py-1 rounded uppercase tracking-wider">Bimbingan Mendatang</span>
-            <span className="text-[10px] text-zinc-300 bg-zinc-800 px-2 py-1 rounded flex items-center gap-1"><Clock size={12}/> 1 Hari 4 Jam Lagi</span>
-          </div>
-          <div className="flex gap-4">
-            <img src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=100&h=100&fit=crop" className="w-12 h-12 rounded-lg object-cover border border-zinc-700" alt="Mentor" />
-            <div>
-              <h4 className="font-bold text-zinc-100 text-lg mb-1">Refactoring API RESTful Modul 03</h4>
-              <div className="text-xs text-zinc-400 mb-2">Bpk. Hendra Kurniawan, S.Kom</div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-zinc-500">
-                <span className="flex items-center gap-1"><CalendarIcon size={12}/> Jumat, 14 Feb 2025</span>
-                <span className="flex items-center gap-1"><Clock size={12}/> 09:00 - 09:45 WIB</span>
-                <span className="flex items-center gap-1"><MapPin size={12}/> Lab RPL Meja B-2</span>
+        {/* BAGIAN BAWAH: BIMBINGAN MENDATANG & CATATAN REFLEKSI */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* BIMBINGAN MENDATANG */}
+          <div className="bg-[#121214] border border-zinc-800 rounded-2xl p-5">
+            <h3 className="text-xs font-bold text-zinc-200 uppercase tracking-wider mb-4 flex items-center justify-between">
+              <span>Bimbingan Mendatang</span>
+              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded">
+                {upcomingSessions.length} Jadwal
+              </span>
+            </h3>
+
+            {upcomingSessions.length === 0 ? (
+              <div className="bg-[#09090b] border border-zinc-800 border-dashed rounded-xl p-6 text-center text-xs text-zinc-500">
+                Belum ada jadwal bimbingan mendatang. Silakan booking lewat form di atas.
               </div>
-            </div>
-          </div>
-          <div className="border-t border-zinc-800 mt-5 pt-4 flex justify-between items-center">
-            <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-              <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Status: Dikonfirmasi & Kalender Tersinkron
-            </div>
-            <button className="text-[10px] text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-              Detail Lab Meet →
-            </button>
-          </div>
-        </div>
-
-        {/* Refleksi */}
-        <div className="bg-[#121214] border border-zinc-800 rounded-xl p-5">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-[10px] font-bold text-zinc-400 bg-zinc-800/50 px-2 py-1 rounded uppercase tracking-wider">Catatan Refleksi Sesi Terakhir</span>
-            <div className="flex text-amber-400"><Star size={14} className="fill-amber-400"/><Star size={14} className="fill-amber-400"/><Star size={14} className="fill-amber-400"/><Star size={14} className="fill-amber-400"/><Star size={14} className="fill-amber-400"/></div>
-          </div>
-          <div className="bg-[#09090b] border border-zinc-800 rounded-lg p-4 mb-4">
-            <div className="text-[10px] text-zinc-500 mb-2 flex items-center gap-1">
-              <MessageSquare size={12}/> Ulasan Bimbingan • 07 Feb 2025 oleh Ibu Ratna, S.Pd
-            </div>
-            <p className="text-xs text-zinc-300 italic leading-relaxed">
-              "Logika normalisasi database 3NF Ahmad sudah sangat matang. Coba perhatikan kembali indeks pada kolom foreign key agar performa query query saat data berjumlah jutaan tetap stabil. Good job!"
-            </p>
-          </div>
-          <div className="flex justify-between items-end">
-            <div className="flex gap-2">
-              <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20"><CheckCircle2 size={16}/></div>
-              <div>
-                <div className="text-[10px] font-bold text-zinc-300">Tugas Lanjutan: Implementasi Foreign Key Index</div>
-                <div className="text-[9px] text-zinc-500">Status: Selesai di-push ke GitHub Repo</div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingSessions.map((ses) => (
+                  <div
+                    key={ses.id}
+                    className="bg-[#09090b] border border-zinc-800 rounded-xl p-4 flex justify-between items-center"
+                  >
+                    <div>
+                      <div className="text-xs font-bold text-zinc-100">
+                        {ses.topic}
+                      </div>
+                      <div className="text-[11px] text-zinc-400 mt-0.5">
+                        Mentor: {ses.mentor?.name || "Mentor Lab"}
+                      </div>
+                      <div className="text-[10px] text-zinc-500 flex items-center gap-3 mt-1.5">
+                        <span className="flex items-center gap-1">
+                          <CalendarIcon size={11} /> {ses.session_date}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock size={11} /> {ses.time_slot} WIB
+                        </span>
+                        <span className="uppercase text-indigo-400 font-bold">
+                          • {ses.location_type}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] text-zinc-500">Total 8 Sesi Konsultasi Semester Ini</span>
-              <button className="text-[10px] text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                Buka Arsip Refleksi <Clock size={12}/>
-              </button>
-            </div>
+            )}
+          </div>
+
+          {/* CATATAN REFLEKSI SESI TERAKHIR */}
+          <div className="bg-[#121214] border border-zinc-800 rounded-2xl p-5">
+            <h3 className="text-xs font-bold text-zinc-200 uppercase tracking-wider mb-4 flex items-center justify-between">
+              <span>Catatan Refleksi Sesi Terakhir</span>
+              <div className="flex text-amber-400 gap-0.5">
+                <Star size={12} fill="currentColor" />
+                <Star size={12} fill="currentColor" />
+                <Star size={12} fill="currentColor" />
+                <Star size={12} fill="currentColor" />
+                <Star size={12} fill="currentColor" />
+              </div>
+            </h3>
+
+            {completedSessions.length === 0 ? (
+              <div className="bg-[#09090b] border border-zinc-800 border-dashed rounded-xl p-6 text-center text-xs text-zinc-500">
+                Catatan evaluasi dari mentor akan muncul di sini setelah sesi bimbingan selesai dilaksanakan.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {completedSessions.map((ses) => (
+                  <div
+                    key={ses.id}
+                    className="bg-[#09090b] border border-zinc-800 rounded-xl p-4"
+                  >
+                    <div className="text-[10px] text-zinc-500 mb-1">
+                      Sesi {ses.session_date} • {ses.mentor?.name}
+                    </div>
+                    <p className="text-xs text-zinc-300 italic">
+                      "{ses.mentor_reflection || "Sesi diskusi berjalan lancar."}"
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
-      {/* Footer System Status (Optional based on image bottom edge) */}
-      <div className="mt-8 flex justify-between items-center text-[10px] text-zinc-500">
-        <span>© 2025 Bimbingan Online Siswa (B.O.S) • SMK Rekayasa Perangkat Lunak</span>
-        <div className="flex gap-3">
-          <span className="bg-zinc-800 px-2 py-0.5 rounded flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> v2.4.0 Production</span>
-          <span className="bg-zinc-800 px-2 py-0.5 rounded flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Sistem Normal</span>
-        </div>
-      </div>
-
     </div>
   );
 }

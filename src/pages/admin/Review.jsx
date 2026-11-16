@@ -15,8 +15,8 @@ export default function Review() {
     try {
       const token = localStorage.getItem('auth_token');
       const response = await axios.get('http://localhost:8000/api/admin/submissions', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+  headers: { Authorization: `Bearer ${token}` }
+});
       if (response.data.success) {
         setSubmissions(response.data.data);
         // Jika data kosong, pastikan tidak error

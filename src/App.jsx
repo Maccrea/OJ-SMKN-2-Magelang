@@ -8,6 +8,7 @@ import Bimbingan from './pages/murid/Bimbingan';
 import AdminDashboard from './pages/admin/Dashboard';
 import ManageUsers from './pages/admin/ManageUsers';
 import Review from './pages/admin/Review';
+import ModulTracks from './pages/murid/ModulTracks';
 
 function Layout({ children }) {
   const location = useLocation();
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<ManageUsers />} />
         <Route path="/admin/review" element={<Review />} />
+        <Route path="/tasks" element={<ModulTracks />} />
       </Routes>
     </Layout>
   );
