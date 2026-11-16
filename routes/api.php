@@ -32,8 +32,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
 });
 Route::get('/gas-import', function () {
+    \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+    \Illuminate\Support\Facades\Schema::dropAllTables();
+    \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
     $sql = file_get_contents(database_path('lab_bos.txt'));
     $sql = preg_replace('/\/\*!.*?\*\/;|START TRANSACTION;|COMMIT;|SET .*?;/s', '', $sql);
     \Illuminate\Support\Facades\DB::unprepared($sql);
+
     return response()->json(['status' => 'MANTAP, DATABASE MASUK SEMUA!']);
 });
