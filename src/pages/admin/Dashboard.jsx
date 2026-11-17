@@ -26,7 +26,7 @@ export default function AdminDashboard() {
   const fetchModules = async (forceUpdateActiveModule = false) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await axios.get('https://oj-smkn-2-magelang-production.up.railway.app//api/admin/modules', {
+      const response = await axios.get('https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
