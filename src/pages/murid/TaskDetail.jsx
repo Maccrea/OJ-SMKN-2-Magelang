@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { Clock, ChevronLeft, Download, Terminal, PlayCircle, BookOpen, MessageSquare } from 'lucide-react';
 
 export default function TaskWorkspace() {
@@ -11,8 +12,6 @@ export default function TaskWorkspace() {
   
   const [code, setCode] = useState('// Tulis jawaban atau analisismu di sini...\n\n');
   const [timeLeft, setTimeLeft] = useState({ hari: 0, jam: 0, mnt: 0, dtk: 0 });
-  
-  // State loading saat tombol kirim dipencet
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -27,6 +26,7 @@ export default function TaskWorkspace() {
         }
       } catch (err) {
         console.error("Gagal memuat tugas", err);
+        toast.error('Gagal memuat detail tugas.');
       } finally {
         setLoading(false);
       }
@@ -55,19 +55,23 @@ export default function TaskWorkspace() {
     return () => clearInterval(timerInterval);
   }, [task]);
 
-  // FUNGSI UNDUH (Dummy untuk saat ini karena file zip belum ada di database)
+  // FUNGSI UNDUH (Notifikasi info elegan)
   const handleDownload = () => {
-    alert('Tidak ada aset tambahan (.zip) yang perlu diunduh untuk tugas ini.');
+    toast('Tidak ada aset tambahan (.zip) yang perlu diunduh untuk tugas ini.', {
+      icon: 'ℹ️',
+    });
   };
 
   // FUNGSI KIRIM JAWABAN
   const handleSubmit = async () => {
     if (!code.trim() || code === '// Tulis jawaban atau analisismu di sini...\n\n') {
-      alert('Tulis jawabanmu dulu dong sebelum dikirim!');
+      toast.error('Tulis jawabanmu dulu sebelum dikirim!');
       return;
     }
     
     setIsSubmitting(true);
+    const toastId = toast.loading('Mengirim & menguji jawabanmu...');
+
     try {
       const token = localStorage.getItem('auth_token');
       const response = await axios.post(`https://oj-smkn-2-magelang-production.up.railway.app/api/student/tasks/${id}/submit`, {
@@ -76,10 +80,11 @@ export default function TaskWorkspace() {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      alert(response.data.message);
-      navigate('/dashboard'); // Balik ke beranda otomatis!
+      toast.success(response.data.message || 'Jawaban berhasil dikumpulkan!', { id: toastId });
+      navigate('/dashboard');
     } catch (error) {
-      alert('Gagal mengirim jawaban. Coba lagi!');
+      const msg = error.response?.data?.message || 'Gagal mengirim jawaban. Coba lagi!';
+      toast.error(msg, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }

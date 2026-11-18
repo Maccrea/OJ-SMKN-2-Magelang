@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { Calendar, Layout as LayoutIcon, Code, X, BookOpen, Save, Layers, ListTodo, Route, MonitorPlay, Edit3, PlusCircle, Trash2, Edit2 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -9,7 +10,7 @@ export default function AdminDashboard() {
   // State Modal Modul (Untuk Create & Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingModuleId, setEditingModuleId] = useState(null); // Penanda Edit Modul
+  const [editingModuleId, setEditingModuleId] = useState(null);
   const [formData, setFormData] = useState({
     title: '', week_number: '', track_id: '1', description: ''
   });
@@ -17,7 +18,7 @@ export default function AdminDashboard() {
   // State Modal Kelola Tugas
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeModule, setActiveModule] = useState(null);
-  const [editingTaskId, setEditingTaskId] = useState(null); // Penanda Edit Tugas
+  const [editingTaskId, setEditingTaskId] = useState(null);
   const [taskData, setTaskData] = useState({
     title: '', study_case_html: '', deadline: ''
   });
@@ -31,7 +32,6 @@ export default function AdminDashboard() {
       });
       if (response.data.success) {
         setModules(response.data.data);
-        // Jika sedang buka modal Kelola Tugas, update juga datanya
         if (forceUpdateActiveModule && activeModule) {
           const updatedActive = response.data.data.find(m => m.id === activeModule.id);
           setActiveModule(updatedActive);
@@ -39,6 +39,7 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error(err);
+      toast.error('Gagal memuat daftar modul.');
     } finally {
       setLoading(false);
     }
@@ -69,41 +70,45 @@ export default function AdminDashboard() {
   const handleSubmitModule = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const toastId = toast.loading(editingModuleId ? 'Menyimpan perubahan modul...' : 'Menerbitkan modul baru...');
+
     try {
       const token = localStorage.getItem('auth_token');
       if (editingModuleId) {
-        // UPDATE
         await axios.put(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules/${editingModuleId}`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        toast.success('Perubahan modul berhasil disimpan!', { id: toastId });
       } else {
-        // CREATE
         await axios.post('https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules', formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        toast.success('Modul baru berhasil diterbitkan!', { id: toastId });
       }
       setIsModalOpen(false);
       fetchModules();
     } catch (error) {
-      alert('Gagal menyimpan modul.');
+      const msg = error.response?.data?.message || 'Gagal menyimpan modul.';
+      toast.error(msg, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteModule = async (id) => {
-    if(!window.confirm('Yakin ingin menghapus modul ini beserta semua tugas di dalamnya?')) return;
+    if (!window.confirm('Yakin ingin menghapus modul ini beserta semua tugas di dalamnya?')) return;
+    const toastId = toast.loading('Menghapus modul...');
     try {
       const token = localStorage.getItem('auth_token');
       await axios.delete(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      toast.success('Modul berhasil dihapus.', { id: toastId });
       fetchModules();
     } catch (error) {
-      alert('Gagal menghapus modul.');
+      toast.error('Gagal menghapus modul.', { id: toastId });
     }
   };
-
 
   // ----------------------------------------------------
   // FUNGSI TUGAS (CREATE, UPDATE, DELETE)
@@ -128,41 +133,44 @@ export default function AdminDashboard() {
   const handleSubmitTask = async (e) => {
     e.preventDefault();
     if (!activeModule) return;
+    const toastId = toast.loading(editingTaskId ? 'Memperbarui tugas...' : 'Menambahkan tugas ke modul...');
+
     try {
       const token = localStorage.getItem('auth_token');
       if (editingTaskId) {
-        // UPDATE TUGAS
         await axios.put(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/tasks/${editingTaskId}`, taskData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        toast.success('Tugas berhasil diperbarui!', { id: toastId });
       } else {
-        // CREATE TUGAS
         await axios.post(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/modules/${activeModule.id}/tasks`, taskData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        toast.success('Tugas baru berhasil ditambahkan ke modul!', { id: toastId });
       }
       setEditingTaskId(null);
       setTaskData({ title: '', study_case_html: '', deadline: '' });
-      fetchModules(true); // Refetch & update activeModule state
+      fetchModules(true);
     } catch (error) {
       const msg = error.response?.data?.message || error.message;
-      alert('Gagal menyimpan tugas: ' + msg);
+      toast.error('Gagal menyimpan tugas: ' + msg, { id: toastId });
     }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if(!window.confirm('Yakin ingin menghapus tugas/analisis ini?')) return;
+    if (!window.confirm('Yakin ingin menghapus tugas/analisis ini?')) return;
+    const toastId = toast.loading('Menghapus tugas...');
     try {
       const token = localStorage.getItem('auth_token');
       await axios.delete(`https://oj-smkn-2-magelang-production.up.railway.app/api/admin/tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      toast.success('Tugas berhasil dihapus.', { id: toastId });
       fetchModules(true);
     } catch (error) {
-      alert('Gagal menghapus tugas.');
+      toast.error('Gagal menghapus tugas.', { id: toastId });
     }
   };
-
 
   const uniqueWeeks = [...new Set(modules.map(mod => mod.week_number))].sort((a, b) => a - b);
 
