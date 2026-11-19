@@ -52,8 +52,8 @@ export default function Login() {
           <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mb-4 border border-indigo-500/30">
             <Terminal size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-zinc-100 mb-2">Selamat Datang di Lab B.O.S 👋</h1>
-          <p className="text-sm text-zinc-400">Masuk ke sesi praktikum coding terpadu dan ruang kolaborasi belajar hari ini.</p>
+          <h1 className="text-2xl font-bold text-zinc-100 mb-2">Welcome Hommy</h1>
+          <p className="text-sm text-zinc-400">Semangat yak see u on top!</p>
         </div>
 
         {errorMsg && (
@@ -110,7 +110,7 @@ export default function Login() {
             disabled={isLoading}
             className="w-full bg-indigo-200 hover:bg-indigo-300 text-indigo-950 font-bold py-3 rounded-lg text-sm transition-colors mt-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Mengecek Data...' : 'Masuk ke Sesi Lab 🚀'}
+            {isLoading ? 'Mengecek Data...' : 'sup hommy come in'}
           </button>
         </form>
       </div>

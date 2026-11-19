@@ -253,18 +253,11 @@ export default function AdminDashboard() {
     <div className="max-w-[1400px] mx-auto px-6 py-8 pb-20">
       <div className="flex justify-between items-end mb-8 border-b border-zinc-800 pb-6">
         <div>
-          <div className="text-[10px] text-zinc-500 mb-2 flex items-center gap-2 font-medium tracking-wider">
-            <span className="bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded flex items-center gap-1 border border-indigo-500/20">
-              <Layers size={12} /> Kurikulum Fase F SMK RPL
-            </span>
-            <span>• Tahun Ajaran 2024/2025</span>
-          </div>
           <h1 className="text-3xl font-bold text-zinc-100 mb-2">
             Kelola Modul Praktikum
           </h1>
           <p className="text-sm text-zinc-400">
-            Atur roadmap materi harian, konfigurasi starter code, dan integrasi
-            evaluasi otomatis Docker.
+            well well ampun suhu kasih tugas yang banyak dong mwehehe!
           </p>
         </div>
       </div>
@@ -287,7 +280,7 @@ export default function AdminDashboard() {
             <div className="w-10 h-10 rounded-full bg-zinc-800/50 flex items-center justify-center text-zinc-600 mb-2">
               <Route size={18} />
             </div>
-            <div className="text-xs text-zinc-400">Roadmap masih kosong.</div>
+            <div className="text-xs text-zinc-400">Masih kosong ni jon</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2">
@@ -337,7 +330,7 @@ export default function AdminDashboard() {
 
         {modules.length === 0 ? (
           <div className="bg-[#121214] border border-zinc-800 border-dashed rounded-xl p-12 text-center text-zinc-500 text-sm">
-            Belum ada modul yang dibuat.
+            Belum ada modulnya jon
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -346,7 +339,6 @@ export default function AdminDashboard() {
                 key={mod.id}
                 className="bg-[#121214] border border-zinc-800 hover:border-zinc-700 rounded-xl p-5 group flex flex-col justify-between relative"
               >
-                {/* Tombol Hapus Modul & Edit Info Modul */}
                 <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleOpenEditModule(mod)}
@@ -393,7 +385,7 @@ export default function AdminDashboard() {
                     onClick={() => handleOpenManageTasks(mod)}
                     className="text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1 cursor-pointer bg-indigo-500/10 px-3 py-1.5 rounded-md border border-indigo-500/20"
                   >
-                    <ListTodo size={12} /> Kelola Tugas
+                    <ListTodo size={12} /> Kelola Tugas hari ini
                   </button>
                 </div>
               </div>
@@ -402,7 +394,6 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* --- MODAL FORM MODUL (CREATE & UPDATE) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090b]/80 backdrop-blur-md px-4">
           <div className="bg-[#121214] border border-zinc-700 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
